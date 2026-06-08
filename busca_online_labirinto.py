@@ -1,6 +1,6 @@
 """
 Parte IV – Busca Online no Labirinto Desconhecido
--------------------------------------------------
+
 Implementa a estratégia Opção A: Replanning com A*.
 
 Ideia central:
@@ -106,7 +106,6 @@ class LabirintoOnline:
         self.real = []
 
         for i, linha in enumerate(linhas):
-            # Preenche linhas menores com parede para evitar caminhos artificiais.
             linha_pad = linha.ljust(self.largura, "#")
             row = []
             for j, ch in enumerate(linha_pad):
@@ -119,7 +118,6 @@ class LabirintoOnline:
                 elif ch == "#":
                     row.append("#")
                 else:
-                    # Espaço, C ou qualquer outro símbolo não parede é tratado como livre.
                     row.append(ch if ch in {" ", "C"} else " ")
             self.real.append(row)
 
@@ -302,7 +300,6 @@ class LabirintoOnline:
         expandidos_planejamento = 0
         sucesso = False
 
-        # Custo ótimo offline com mapa completo, para comparação online/offline.
         offline = self.astar_real(self.inicio, self.objetivo)
         custo_offline = offline.custo
 
@@ -313,7 +310,6 @@ class LabirintoOnline:
 
         passo = 0
         while movimentos < max_passos:
-            # perceber -> atualizar mapa interno
             self.perceber(atual, interno, reveladas)
 
             if salvar_frames:
@@ -323,7 +319,6 @@ class LabirintoOnline:
                 sucesso = True
                 break
 
-            # planejar
             objetivo_conhecido = self.objetivo_revelado(interno)
             replanejamentos += 1
 
@@ -331,7 +326,6 @@ class LabirintoOnline:
                 plano = self.astar_interno(atual, {objetivo_conhecido}, interno)
                 expandidos_planejamento += plano.expandidos
 
-                # Se o objetivo foi revelado, mas ainda não há caminho conhecido, continue explorando fronteiras.
                 if not plano.caminho or math.isinf(plano.custo):
                     plano = self._planejar_para_fronteira(atual, interno)
                     expandidos_planejamento += plano.expandidos
@@ -340,14 +334,11 @@ class LabirintoOnline:
                 expandidos_planejamento += plano.expandidos
 
             if not plano.caminho or len(plano.caminho) < 2:
-                # Sem plano para objetivo ou fronteira: falha.
                 break
 
             proximo = plano.caminho[1]
 
-            # agir: executa apenas o próximo passo e depois replaneja.
             if not self.eh_livre_real(proximo):
-                # Não deveria ocorrer, pois o próximo passo é sempre em célula conhecida como livre.
                 break
 
             if visitas.get(proximo, 0) > 0:
@@ -359,7 +350,6 @@ class LabirintoOnline:
             movimentos += 1
             passo += 1
 
-        # percepção final, para registrar o mapa interno após a parada.
         self.perceber(atual, interno, reveladas)
         if atual == self.objetivo:
             sucesso = True
@@ -387,7 +377,6 @@ class LabirintoOnline:
 
     def _planejar_para_fronteira(self, atual: Estado, interno: List[List[str]]) -> ResultadoAStar:
         fronteiras = self.celulas_fronteira(interno)
-        # Não faz sentido planejar para a posição atual; queremos avançar para revelar novas regiões.
         if atual in fronteiras and len(fronteiras) > 1:
             fronteiras.remove(atual)
         return self.astar_interno(atual, fronteiras, interno)
@@ -398,7 +387,6 @@ class LabirintoOnline:
             l, c = p
             if grid[l][c] not in {"A", "B", "#"}:
                 grid[l][c] = "."
-        # Mantém A e B destacados.
         il, ic = self.inicio
         bl, bc = self.objetivo
         grid[il][ic] = "A"
@@ -437,7 +425,6 @@ class LabirintoOnline:
 def salvar_resultados(resultado: ResultadoOnline, lab: LabirintoOnline, saida: Path) -> None:
     saida.mkdir(parents=True, exist_ok=True)
 
-    # CSV de métricas principais.
     csv_metricas = saida / "metricas_online.csv"
     with open(csv_metricas, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
@@ -473,7 +460,6 @@ def salvar_resultados(resultado: ResultadoOnline, lab: LabirintoOnline, saida: P
             }
         )
 
-    # CSV passo a passo da trajetória.
     csv_traj = saida / "trajetoria_online.csv"
     with open(csv_traj, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["passo", "linha", "coluna"])
@@ -481,7 +467,6 @@ def salvar_resultados(resultado: ResultadoOnline, lab: LabirintoOnline, saida: P
         for i, (l, c) in enumerate(resultado.trajetoria):
             writer.writerow({"passo": i, "linha": l, "coluna": c})
 
-    # Visualizações textuais.
     (saida / "mapa_real_com_trajeto.txt").write_text(
         lab.renderizar_mapa_real_com_trajeto(resultado.trajetoria), encoding="utf-8"
     )
@@ -497,7 +482,6 @@ def salvar_resultados(resultado: ResultadoOnline, lab: LabirintoOnline, saida: P
         encoding="utf-8",
     )
 
-    # Caminho ótimo offline, para comparação.
     (saida / "caminho_otimo_offline.txt").write_text(
         lab.renderizar_mapa_real_com_trajeto(resultado.caminho_otimo_offline), encoding="utf-8"
     )
