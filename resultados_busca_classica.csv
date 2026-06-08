@@ -1,0 +1,6 @@
+mapa,algoritmo,sucesso,custo,passos,nos_explorados,nos_expandidos,tempo_execucao_s,fronteira_maxima
+/mnt/data/mapas/labirinto_teste.txt,BFS,True,17.0,17,27,26,0.00010287,3
+/mnt/data/mapas/labirinto_teste.txt,DFS,True,21.0,21,22,21,0.00006648,3
+/mnt/data/mapas/labirinto_teste.txt,UCS,True,17.0,17,27,26,0.00009677,3
+/mnt/data/mapas/labirinto_teste.txt,Gulosa,True,21.0,21,23,22,0.00010442,3
+/mnt/data/mapas/labirinto_teste.txt,A*,True,17.0,17,27,26,0.00010414,3
