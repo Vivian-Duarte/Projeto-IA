@@ -13,8 +13,6 @@ from pathlib import Path
 
 Estado = Tuple[int, int]
 
-# A ordem abaixo segue o enunciado do trabalho: movimentos ortogonais.
-# Na matriz, x = linha e y = coluna.
 ACOES = [
     ("cima", (-1, 0)),
     ("baixo", (1, 0)),
@@ -28,7 +26,7 @@ class No:
     estado: Estado
     pai: Optional["No"] = None
     acao: Optional[str] = None
-    g: float = 0.0  # custo acumulado do caminho ate este no
+    g: float = 0.0  
 
 
 @dataclass
@@ -99,7 +97,6 @@ class LabirintoBusca:
         with open(filename, encoding="utf-8") as f:
             conteudo = f.read()
 
-        # Remove apenas linhas vazias no final. Nao usamos strip() para nao perder espacos do labirinto.
         linhas = conteudo.splitlines()
         while linhas and linhas[-1] == "":
             linhas.pop()
@@ -134,7 +131,6 @@ class LabirintoBusca:
         self.largura = max(len(linha) for linha in linhas)
 
         for i, linha_original in enumerate(linhas):
-            # Se alguma linha vier menor, completamos com parede para nao criar caminho falso fora do desenho.
             linha = linha_original.ljust(self.largura, "#")
             linha_grade: List[str] = []
             linha_paredes: List[bool] = []
@@ -152,8 +148,6 @@ class LabirintoBusca:
                     linha_grade.append("#")
                     linha_paredes.append(True)
                 else:
-                    # Para a Parte II, qualquer caractere diferente de parede e tratado como transitavel.
-                    # Isso permite reaproveitar mapas que tenham C na Parte III sem quebrar a Parte II.
                     linha_grade.append(char)
                     linha_paredes.append(False)
 
@@ -309,9 +303,6 @@ class LabirintoBusca:
             explorados.add(no.estado)
             nos_expandidos += 1
             estados_expandidos.append(no.estado)
-
-            # Para que a pilha tente acoes na ordem cima, baixo, esquerda, direita,
-            # inserimos os vizinhos na ordem inversa.
             for acao, estado, custo in reversed(self.vizinhos(no.estado)):
                 if estado not in explorados and estado not in em_fronteira:
                     filho = No(estado=estado, pai=no, acao=acao, g=no.g + custo)
@@ -352,7 +343,6 @@ class LabirintoBusca:
         while fronteira:
             _, _, no = heapq.heappop(fronteira)
 
-            # Ignora entradas antigas do heap.
             if no.estado in fechados:
                 continue
 
@@ -379,7 +369,6 @@ class LabirintoBusca:
 
                 novo_g = no.g + custo
 
-                # Mantem, para cada estado, o melhor custo real conhecido ate ele.
                 if novo_g < melhor_g.get(estado, math.inf):
                     filho = No(estado=estado, pai=no, acao=acao, g=novo_g)
                     melhor_g[estado] = novo_g
