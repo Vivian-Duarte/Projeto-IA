@@ -1,0 +1,3 @@
+mapa,algoritmo,melhor_custo,pior_custo,custo_medio,tempo_medio_s,iteracoes_media,taxa_sucesso
+mapas/coletas_01.txt,Hill-Climbing,144.00,144.00,144.00,0.000040,1.6,100.00%
+mapas/coletas_01.txt,Simulated Annealing,144.00,144.00,144.00,0.004265,1838.0,100.00%

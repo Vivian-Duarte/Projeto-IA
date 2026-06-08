@@ -1,0 +1,6 @@
+mapa,algoritmo,sucesso,custo,passos,nos_explorados,nos_expandidos,tempo_execucao_s,fronteira_maxima
+mapas/labirinto_02.txt,BFS,True,314.0,314,494,493,0.00085260,4
+mapas/labirinto_02.txt,DFS,True,314.0,314,477,476,0.00125200,7
+mapas/labirinto_02.txt,UCS,True,314.0,314,494,493,0.00085810,4
+mapas/labirinto_02.txt,Gulosa,True,314.0,314,357,356,0.00065800,9
+mapas/labirinto_02.txt,A*,True,314.0,314,467,466,0.00085150,6

@@ -1,0 +1,2 @@
+mapa,sucesso,custo_online,movimentos,custo_offline,razao_online_offline,celulas_reveladas,celulas_revisitadas,replanejamentos,nos_expandidos_planejamento,tempo_s
+mapas/labirinto_01.txt,True,258.00,258,68.00,3.7941,365,95,258,2046,0.479098
