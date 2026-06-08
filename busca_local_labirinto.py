@@ -50,9 +50,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-# ─────────────────────────────────────────────────────────────
-# Reutilização da infraestrutura da Parte II
-# ─────────────────────────────────────────────────────────────
 import heapq
 
 Estado = Tuple[int, int]
@@ -65,21 +62,12 @@ ACOES = [
 ]
 
 
-# ─────────────────────────────────────────────────────────────
-# Estruturas auxiliares
-# ─────────────────────────────────────────────────────────────
-
 @dataclass
 class No:
     estado: Estado
     pai: Optional["No"] = None
     acao: Optional[str] = None
     g: float = 0.0
-
-
-# ─────────────────────────────────────────────────────────────
-# Labirinto com pontos de coleta
-# ─────────────────────────────────────────────────────────────
 
 class LabirintoColeta:
     """
@@ -96,19 +84,15 @@ class LabirintoColeta:
         self.paredes: List[List[bool]] = []
         self.inicio: Estado
         self.objetivo: Estado
-        self.coletas: List[Estado] = []          # lista ordenada de Ci
+        self.coletas: List[Estado] = []          
         self._ler_mapa(filename)
 
-        # Pontos relevantes: A, C1…Ck, B
         self.nos_relevantes: List[Estado] = (
             [self.inicio] + list(self.coletas) + [self.objetivo]
         )
 
-        # Pré-computação de distâncias: dist[(p, q)] = custo A* de p até q
         self.dist: Dict[Tuple[Estado, Estado], float] = {}
         self._precomputar_distancias()
-
-    # ── Leitura do mapa ──────────────────────────────────────
 
     def _ler_mapa(self, filename: str) -> None:
         with open(filename, encoding="utf-8") as f:
@@ -119,8 +103,7 @@ class LabirintoColeta:
             linhas.pop()
         if not linhas:
             raise ValueError("Arquivo de labirinto vazio.")
-
-        # Normaliza S→A, E→B (compatibilidade com ASCII Maze Generator)
+        
         total_A = sum(l.count("A") for l in linhas)
         total_S = sum(l.count("S") for l in linhas)
         total_B = sum(l.count("B") for l in linhas)
@@ -179,10 +162,7 @@ class LabirintoColeta:
                 "A Parte III exige ao menos um ponto de coleta."
             )
 
-        # Mantém ordem de leitura (linha a linha, coluna a coluna)
         self.coletas = sorted(coletas_raw)
-
-    # ── Primitivas do grafo ───────────────────────────────────
 
     def transitavel(self, estado: Estado) -> bool:
         l, c = estado
@@ -203,8 +183,6 @@ class LabirintoColeta:
 
     def h_manhattan(self, a: Estado, b: Estado) -> float:
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-    # ── A* ponto a ponto ──────────────────────────────────────
 
     def _a_estrela(self, origem: Estado, destino: Estado) -> float:
         """
@@ -292,8 +270,6 @@ class LabirintoColeta:
                     )
         return []
 
-    # ── Pré-computação de distâncias ──────────────────────────
-
     def _precomputar_distancias(self) -> None:
         """
         Calcula d(X, Y) para todos os pares relevantes (X, Y) onde
@@ -310,12 +286,8 @@ class LabirintoColeta:
                     if par not in self.dist:
                         self.dist[par] = self._a_estrela(nos[i], nos[j])
 
-    # ── Função de custo de uma solução ───────────────────────
-
     def custo_solucao(self, permutacao: List[Estado]) -> float:
         """
-        C(s) = d(A, Cπ(1)) + Σ d(Cπ(i), Cπ(i+1)) + d(Cπ(k), B)
-
         Recebe uma lista com a ordem de visitação dos pontos de coleta.
         Retorna math.inf se algum trecho for inacessível.
         """
@@ -330,17 +302,11 @@ class LabirintoColeta:
         custo += self.dist.get((permutacao[-1], self.objetivo), math.inf)
         return custo
 
-    # ── Vizinhança: troca de dois elementos (swap) ────────────
-
     @staticmethod
     def vizinhanca_swap(permutacao: List[Estado]) -> List[List[Estado]]:
         """
         Gera todos os vizinhos por troca de dois pontos de coleta.
         Para k coletas, gera k*(k-1)/2 vizinhos.
-
-        Justificativa: swap é a vizinhança mais comum para problemas de
-        ordenação porque cada operação altera localmente a solução,
-        preservando a estrutura global.
         """
         vizinhos = []
         n = len(permutacao)
@@ -350,8 +316,6 @@ class LabirintoColeta:
                 viz[i], viz[j] = viz[j], viz[i]
                 vizinhos.append(viz)
         return vizinhos
-
-    # ── Visualização do caminho completo ─────────────────────
 
     def caminho_completo(self, permutacao: List[Estado]) -> List[Estado]:
         """
@@ -364,7 +328,6 @@ class LabirintoColeta:
             trecho = self._a_estrela_caminho(pontos[i], pontos[i + 1])
             if not trecho:
                 return []
-            # Evita duplicar o ponto de junção
             caminho.extend(trecho[1:])
         return caminho
 
@@ -395,11 +358,6 @@ class LabirintoColeta:
 
         return "\n".join("".join(row) for row in vis)
 
-
-# ─────────────────────────────────────────────────────────────
-# Resultados de busca local
-# ─────────────────────────────────────────────────────────────
-
 @dataclass
 class ResultadoBuscaLocal:
     algoritmo: str
@@ -409,14 +367,9 @@ class ResultadoBuscaLocal:
     custo_medio: float
     tempo_medio: float
     iteracoes_media: float
-    curvas_convergencia: List[List[float]]   # uma curva por execução
-    taxa_sucesso: float                      # fração de execuções que melhoraram
+    curvas_convergencia: List[List[float]]   
+    taxa_sucesso: float                      
     todos_custos: List[float]
-
-
-# ─────────────────────────────────────────────────────────────
-# Hill-Climbing com reinício aleatório
-# ─────────────────────────────────────────────────────────────
 
 def hill_climbing(
     lab: LabirintoColeta,
@@ -424,9 +377,9 @@ def hill_climbing(
     seed: Optional[int] = None,
 ) -> Tuple[float, List[Estado], List[float], int]:
     """
-    Hill-Climbing de subida mais íngreme (steepest ascent) para minimização.
+    Hill-Climbing de subida mais íngreme para minimização.
 
-    Vizinhança: todos os swaps (ver LabirintoColeta.vizinhanca_swap).
+    Vizinhança: todos os swaps.
     Para problema de minimização, aceita apenas movimentos que reduzam o custo.
     Para em mínimo local quando nenhum vizinho é melhor.
 
@@ -443,7 +396,7 @@ def hill_climbing(
 
     for it in range(1, max_iter + 1):
         vizinhos = lab.vizinhanca_swap(perm_atual)
-        rng.shuffle(vizinhos)  # evita viés de ordem
+        rng.shuffle(vizinhos) 
 
         melhor_viz = None
         melhor_custo_viz = custo_atual
@@ -455,7 +408,6 @@ def hill_climbing(
                 melhor_viz = viz
 
         if melhor_viz is None:
-            # Mínimo local atingido
             curva.append(custo_atual)
             return custo_atual, perm_atual, curva, it
 
@@ -497,11 +449,6 @@ def hill_climbing_multiplos_reinicios(
 
     return melhor_global, melhor_perm_global, melhor_curva, total_iter
 
-
-# ─────────────────────────────────────────────────────────────
-# Simulated Annealing
-# ─────────────────────────────────────────────────────────────
-
 def simulated_annealing(
     lab: LabirintoColeta,
     temperatura_inicial: float = 1000.0,
@@ -512,9 +459,6 @@ def simulated_annealing(
 ) -> Tuple[float, List[Estado], List[float], int]:
     """
     Simulated Annealing para minimização do custo de visitação.
-
-    Estratégia de vizinhança: swap aleatório de dois pontos de coleta.
-    Critério de aceitação: aceita solução pior com probabilidade e^(-Δ/T).
 
     Parâmetros:
         temperatura_inicial : temperatura de início do resfriamento.
@@ -539,7 +483,6 @@ def simulated_annealing(
     it = 0
 
     while T > temperatura_minima and it < max_iter:
-        # Gera vizinho por swap aleatório
         n = len(perm_atual)
         if n < 2:
             break
@@ -549,8 +492,6 @@ def simulated_annealing(
         custo_viz = lab.custo_solucao(viz)
 
         delta = custo_viz - custo_atual
-
-        # Aceita melhora sempre; aceita piora com probabilidade e^(-Δ/T)
         if delta < 0 or rng.random() < math.exp(-delta / T):
             perm_atual = viz
             custo_atual = custo_viz
@@ -565,11 +506,6 @@ def simulated_annealing(
 
     return melhor_custo, melhor_perm, curva, it
 
-
-# ─────────────────────────────────────────────────────────────
-# Execução de múltiplos experimentos e coleta de métricas
-# ─────────────────────────────────────────────────────────────
-
 def executar_experimentos(
     lab: LabirintoColeta,
     num_execucoes: int = 20,
@@ -581,7 +517,6 @@ def executar_experimentos(
     sa_taxa_resfriamento: float = 0.995,
     sa_temp_minima: float = 0.1,
     sa_max_iter: int = 50_000,
-    # Referência: solução ótima por força bruta (só viável para k ≤ 8)
     calcular_otimo: bool = True,
     seed_base: int = 42,
 ) -> Dict[str, ResultadoBuscaLocal]:
@@ -592,8 +527,6 @@ def executar_experimentos(
     Limiar de "solução aceitável": custo ≤ 1.10 × melhor custo conhecido/ótimo.
     """
     resultados: Dict[str, ResultadoBuscaLocal] = {}
-
-    # Referência ótima (força bruta) para taxa de sucesso
     custo_otimo = _custo_otimo(lab) if calcular_otimo and len(lab.coletas) <= 8 else None
     limiar_aceitavel_fator = 1.10
 
@@ -608,7 +541,7 @@ def executar_experimentos(
         melhores_perms: List[List[Estado]] = []
 
         for rodada in range(num_execucoes):
-            seed = seed_base + rodada * 997  # sementes reprodutíveis
+            seed = seed_base + rodada * 997 
 
             t0 = time.perf_counter()
             if nome_alg == "Hill-Climbing":
@@ -630,8 +563,6 @@ def executar_experimentos(
 
         melhor_custo = min(custos)
         melhor_perm = melhores_perms[custos.index(melhor_custo)]
-
-        # Taxa de sucesso: execuções que encontraram solução aceitável
         referencia = custo_otimo if custo_otimo is not None else melhor_custo
         limiar = referencia * limiar_aceitavel_fator
         taxa = sum(1 for c in custos if c <= limiar) / num_execucoes
@@ -697,11 +628,6 @@ def _custo_otimo(lab: LabirintoColeta) -> float:
             melhor = c
     return melhor
 
-
-# ─────────────────────────────────────────────────────────────
-# Exportação de resultados
-# ─────────────────────────────────────────────────────────────
-
 def salvar_resultados_csv(
     resultados: Dict[str, ResultadoBuscaLocal],
     diretorio: str,
@@ -731,8 +657,6 @@ def salvar_resultados_csv(
                 "iteracoes_media": f"{r.iteracoes_media:.1f}",
                 "taxa_sucesso": f"{r.taxa_sucesso:.2%}",
             })
-
-    # CSV com todas as execuções (custos individuais)
     arquivo_raw = saida / "resultados_busca_local_raw.csv"
     with arquivo_raw.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
@@ -750,11 +674,6 @@ def salvar_resultados_csv(
 
     print(f"  CSV métricas  : {arquivo}")
     print(f"  CSV raw       : {arquivo_raw}")
-
-
-# ─────────────────────────────────────────────────────────────
-# Visualizações Matplotlib
-# ─────────────────────────────────────────────────────────────
 
 def gerar_graficos(
     resultados: Dict[str, ResultadoBuscaLocal],
@@ -782,8 +701,6 @@ def gerar_graficos(
 
     titulo_base = f"Busca Local – {Path(nome_mapa).stem}" if nome_mapa else "Busca Local"
     cores = {"Hill-Climbing": "#e05c2e", "Simulated Annealing": "#2e7be0"}
-
-    # ── 1. Curva de convergência ──────────────────────────────
     fig, axes = plt.subplots(
         1, len(resultados), figsize=(7 * len(resultados), 5), sharey=True
     )
@@ -813,8 +730,6 @@ def gerar_graficos(
     fig.savefig(arq1, dpi=150)
     plt.close(fig)
     print(f"  Gráfico 1     : {arq1}")
-
-    # ── 2. Boxplot de custos ──────────────────────────────────
     fig, ax = plt.subplots(figsize=(6, 5))
     nomes = list(resultados.keys())
     dados = [r.todos_custos for r in resultados.values()]
@@ -835,8 +750,6 @@ def gerar_graficos(
     fig.savefig(arq2, dpi=150)
     plt.close(fig)
     print(f"  Gráfico 2     : {arq2}")
-
-    # ── 3. Barras: melhor / médio / pior ──────────────────────
     fig, ax = plt.subplots(figsize=(7, 5))
     x = list(range(len(nomes)))
     largura = 0.25
@@ -863,8 +776,6 @@ def gerar_graficos(
     fig.savefig(arq3, dpi=150)
     plt.close(fig)
     print(f"  Gráfico 3     : {arq3}")
-
-    # ── 4. Taxa de sucesso ────────────────────────────────────
     fig, ax = plt.subplots(figsize=(5, 4))
     taxas = [r.taxa_sucesso * 100 for r in resultados.values()]
     bars = ax.bar(nomes, taxas, color=[cores.get(n, "steelblue") for n in nomes], alpha=0.85)
@@ -884,11 +795,6 @@ def gerar_graficos(
     fig.savefig(arq4, dpi=150)
     plt.close(fig)
     print(f"  Gráfico 4     : {arq4}")
-
-
-# ─────────────────────────────────────────────────────────────
-# Tabela de resumo no terminal
-# ─────────────────────────────────────────────────────────────
 
 def imprimir_tabela(resultados: Dict[str, ResultadoBuscaLocal]) -> None:
     sep = "-" * 100
@@ -912,11 +818,6 @@ def imprimir_tabela(resultados: Dict[str, ResultadoBuscaLocal]) -> None:
         )
     print(sep)
 
-
-# ─────────────────────────────────────────────────────────────
-# Função de mapa de demonstração embutido
-# ─────────────────────────────────────────────────────────────
-
 MAPA_DEMO = """\
 ###########
 #A   #    #
@@ -933,11 +834,6 @@ def criar_mapa_demo(caminho: str) -> None:
     if not p.exists():
         p.write_text(MAPA_DEMO, encoding="utf-8")
         print(f"  Mapa de demo criado: {p}")
-
-
-# ─────────────────────────────────────────────────────────────
-# Ponto de entrada principal
-# ─────────────────────────────────────────────────────────────
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -970,12 +866,10 @@ def main() -> None:
         "--demo", action="store_true",
         help="Cria e executa o mapa de demonstração embutido",
     )
-    # Parâmetros de Simulated Annealing
     parser.add_argument("--sa-temp-ini",  type=float, default=1000.0)
     parser.add_argument("--sa-resfr",     type=float, default=0.995)
     parser.add_argument("--sa-temp-min",  type=float, default=0.1)
     parser.add_argument("--sa-max-iter",  type=int,   default=50_000)
-    # Parâmetros de Hill-Climbing
     parser.add_argument(
         "--hc-reinicios", type=int, default=1,
         help="Número de reinícios do Hill-Climbing. Use 1 para o HC puro pedido no TP (padrão: 1).",
@@ -989,8 +883,6 @@ def main() -> None:
 
     if args.demo:
         criar_mapa_demo(args.mapa)
-
-    # ── Carrega labirinto ─────────────────────────────────────
     print(f"\n{'='*55}")
     print(f"  Parte III – Busca Local com Pontos de Coleta")
     print(f"{'='*55}")
@@ -1004,9 +896,7 @@ def main() -> None:
     print(f"  Coletas    : {len(lab.coletas)} ponto(s) — {lab.coletas}")
     print(f"  Execuções  : {args.execucoes} por algoritmo")
 
-    # ── Executa experimentos ──────────────────────────────────
     print("\n  Pré-computando distâncias via A*…", end=" ", flush=True)
-    # (já feito no __init__, apenas sinalizamos ao usuário)
     print("OK")
 
     print("  Executando experimentos…")
@@ -1022,20 +912,17 @@ def main() -> None:
         calcular_otimo=(len(lab.coletas) <= 8),
     )
 
-    # ── Exibe tabela ──────────────────────────────────────────
     imprimir_tabela(resultados)
 
-    # ── Melhor caminho de cada algoritmo ──────────────────────
     if args.mostrar:
         for nome, r in resultados.items():
-            print(f"\n{'─'*55}")
+            print(f"\n{'-'*55}")
             print(f"  {nome} – melhor permutação: {r.melhor_permutacao}")
             print(f"  Custo: {r.melhor_custo:.1f}")
             print()
             print(lab.visualizar(r.melhor_permutacao))
         print()
 
-    # ── Salva resultados ──────────────────────────────────────
     print(f"\n  Salvando resultados em '{args.saida}/'…")
     salvar_resultados_csv(resultados, args.saida, nome_mapa=args.mapa)
     gerar_graficos(resultados, args.saida, nome_mapa=args.mapa)
